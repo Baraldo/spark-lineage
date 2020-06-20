@@ -57,7 +57,7 @@ def extract_cat():
     return spark.sql('SELECT * FROM zippo LEFT JOIN zap as k on k.age = zippo.age')
 
 extracted = extract_cat()
-print(extracted.require)
+print(extracted.require) # prints ['zippo', 'zap']
 ```
 
 ## Install
