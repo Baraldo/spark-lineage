@@ -1,11 +1,12 @@
 from pyspark.sql import DataFrame
 from spark_lineage.Exceptions import LinageException 
+from spark_lineage.domain.Parser import Parser
 import inspect
 import re
 
 
 class Lineage:
-    def __init__(self, name, func, is_extractor, description, *args, **kwargs):
+    def __init__(self, name, func, is_extractor, description, produce_parser: Parser,  *args, **kwargs):
         self.name = name
         self.func = func
         self.description = description
@@ -17,7 +18,10 @@ class Lineage:
             self.produced = self.dataframe.columns
         else:
             self.__parse_required_columns()
-            self.__infer_produced_columns()
+            if produce_parser == Parser.INFER_PRODUCED:
+                self.__infer_produced_columns()
+            if produce_parser == Parser.VANILLA_PRODUCED:
+                self.__parse_produced_columns
 
 
     def __parse_required_columns(self):
@@ -60,11 +64,9 @@ class Lineage:
         self.dataframe = self.func(*r_args, **r_kwargs)
         self.lineage = lineage_list
     
-
-    @staticmethod
-    def lineage(is_extractor=False, description=None):
-        def wrapper(func):
-            def _wrapper(*args, **kwargs):
-                return Lineage(func.__name__, func, is_extractor, description, *args, **kwargs)
-            return _wrapper
-        return wrapper
+    def graph(self, nodes=[], edges=[]):
+        nodes.append(self.name)
+        for r in self.lineage:
+            edges.append((self.name, r.name))
+            r.graph(nodes, edges)
+        return nodes, edges
