@@ -1,8 +1,11 @@
 from pyspark.sql import DataFrame
+import matplotlib.pyplot as plt
+import inspect
+import networkx as nx
+import re
+
 from spark_lineage.Exceptions import LinageException 
 from spark_lineage.domain.Parser import Parser
-import inspect
-import re
 
 
 class Lineage:
@@ -70,3 +73,22 @@ class Lineage:
             edges.append((self.name, r.name))
             r.graph(nodes, edges)
         return nodes, edges
+
+    def print_graph(self):
+        nodes, edges = self.graph()
+        G = nx.Graph()
+        G.add_edges_from(edges)
+        G.add_nodes_from(nodes)
+        
+        nx.draw(
+            G, 
+            with_labels=True
+            )
+
+        pos=nx.shell_layout(G)
+        x_values, y_values = zip(*pos.values())
+        x_max = max(x_values)
+        x_min = min(x_values)
+        x_margin = (x_max - x_min) * 2
+        plt.xlim(x_min - x_margin, x_max + x_margin)
+        plt.savefig('foo.png')

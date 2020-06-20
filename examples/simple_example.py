@@ -20,14 +20,10 @@ def extract_df():
 def return_df_again(df):
     return df.withColumn(colName = 'duf', col = f.col('df'))
 
-@lineage.lineage(description='I am here to check my graphs with more nodes!')
-def return_df_once_more(df, df2, df3):
-    return df.withColumn(colName = 'kipp', col = f.col('df'))
 
-
-extracted = extract_df(path=None)
-returned = return_df(extracted)
-returned_again = return_df_again(returned)
-df = return_df_once_more(returned, extracted, returned_again)
+df = extract_df(path=None)
+print(vars(df))
+df = return_df(df)
+print(vars(df))
+df = return_df_again(df)
 print(df.graph())
-print(df.print_graph())
