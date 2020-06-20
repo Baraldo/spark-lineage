@@ -1,11 +1,13 @@
+import sys
+sys.path.append('../spark_lineage')
+
 import pyspark.sql.functions as f
 from pyspark import SparkContext, SparkConf
 from pyspark.sql import SparkSession
 
 from spark_lineage.LineageFactory import LineageFactory
-from spark_lineage.domain.Parser import Parser
 
-lineage = LineageFactory(Parser.INFER_PRODUCED)
+lineage = LineageFactory()
 spark = SparkSession.builder.appName("spark-lineage").getOrCreate()
 
 @lineage.lineage(description='I create a a new column that is the same as AGE column.')
@@ -20,10 +22,14 @@ def extract_df():
 def return_df_again(df):
     return df.withColumn(colName = 'duf', col = f.col('df'))
 
+@lineage.lineage(description='I am here to check my graphs with more nodes!')
+def return_df_once_more(df, df2, df3):
+    return df.withColumn(colName = 'kipp', col = f.col('df'))
 
-df = extract_df(path=None)
-print(vars(df))
-df = return_df(df)
-print(vars(df))
-df = return_df_again(df)
+
+extracted = extract_df(path=None)
+returned = return_df(extracted)
+returned_again = return_df_again(returned)
+df = return_df_once_more(returned, extracted, returned_again)
 print(df.graph())
+df.print_graph()

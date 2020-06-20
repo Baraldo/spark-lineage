@@ -3,13 +3,14 @@ import matplotlib.pyplot as plt
 import inspect
 import networkx as nx
 import re
+import json
 
 from spark_lineage.Exceptions import LinageException 
 from spark_lineage.domain.Parser import Parser
 
 
 class Lineage:
-    def __init__(self, name, func, is_extractor, description, produce_parser: Parser,  *args, **kwargs):
+    def __init__(self, name, func, is_extractor, description, produce_parser: Parser, require_parser: Parser,  *args, **kwargs):
         self.name = name
         self.func = func
         self.description = description
@@ -17,13 +18,17 @@ class Lineage:
         
         if is_extractor:
             '''It is expected to have a path kwarg here to indentify the source.'''
-            self.require = [kwargs.get('path')]
             self.produced = self.dataframe.columns
+            self.require = [kwargs.get('path')]
         else:
-            self.__parse_required_columns()
-            if produce_parser == Parser.INFER_PRODUCED:
+            if require_parser == Parser.REQUIRED_SPARK_EXECUTION_PARSER:
+                self.__required_spark_execution_parser()
+            if require_parser == Parser.REQUIRED_STRING_PARSER:
+                self.__parse_required_columns()
+
+            if produce_parser == Parser.PRODUCED_INFER_PARSER:
                 self.__infer_produced_columns()
-            if produce_parser == Parser.VANILLA_PRODUCED:
+            if produce_parser == Parser.PRODUCED_STRING_PARSER:
                 self.__parse_produced_columns
 
 
@@ -39,6 +44,15 @@ class Lineage:
         s=inspect.getsource(self.func).replace('\n', ' ').replace('\r', '').replace(" ", "")
         with_columns = re.findall(r'colName=\'(.*?)\'',s)
         self.produce = with_columns
+
+    def __required_spark_execution_parser(self):
+        query_execution = self.dataframe._jdf.queryExecution()
+        logical_dict_list = json.loads(query_execution.logical().prettyJson())
+        required = []
+        for x in logical_dict_list:
+            if x.get('tableIdentifier'):
+                required.append(x['tableIdentifier'].get('table'))
+        self.require = required
 
 
     def __infer_produced_columns(self):
