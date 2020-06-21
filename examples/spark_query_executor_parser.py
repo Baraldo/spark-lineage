@@ -9,7 +9,7 @@ import json
 from spark_lineage.LineageFactory import LineageFactory
 from spark_lineage.domain.Parser import Parser
 
-lineage = LineageFactory(required_parser=Parser.REQUIRED_SPARK_EXECUTION_PARSER)
+lineage = LineageFactory()
 
 spark = SparkSession.builder.appName("spark-lineage").getOrCreate()
 
@@ -21,7 +21,7 @@ df2.registerTempTable('zap')
 
 @lineage.lineage()
 def extract_cat():
-    return spark.sql('SELECT * FROM zippo LEFT JOIN zap as k on k.age = zippo.age')
+    return spark.sql('SELECT zippo.age, k.age FROM zippo LEFT JOIN zap as k on k.age = zippo.age')
 
 extracted = extract_cat()
 print(extracted.require)
