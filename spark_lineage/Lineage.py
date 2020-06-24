@@ -22,12 +22,12 @@ class Lineage:
 
     def print_graph(self):
         nodes, edges = self.graph()
-        G = nx.Graph()
+        G = nx.DiGraph(directed=True)
         G.add_edges_from(edges)
         G.add_nodes_from(nodes)
         
         nx.draw(
-            G, 
+            G.reverse(), 
             with_labels=True
             )
 
